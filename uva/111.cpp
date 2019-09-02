@@ -14,7 +14,6 @@ int count(int N) {
 		for( int j = 1; j < i; j++)
 			if( rank[ans[j]] < rank[ans[i]] )
 				m = std::max(m, seq[j]);
-				//m = (seq[j] > m) ? seq[j] : m;
 		
 		seq[i] = m + 1;
 		if( seq[i] > max_count )
@@ -32,9 +31,7 @@ int process(int N){
 	//Read rank
 	int r = 0;
 	for( int i = 1; i <= N; i++ ){
-		std::scanf("%i", &r);
-		rank[i] = r;
-		//std::printf("rank[%i] = %i\n", i, r);
+		std::scanf("%i", &rank[i]);
 	}
 		
 	while(true){
