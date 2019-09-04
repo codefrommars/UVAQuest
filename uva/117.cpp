@@ -3,20 +3,21 @@
 #include <string.h>
 #include <limits.h>
 
-
-
-
 //Euler’s Path and Circuit Theorems
 
 //A graph will contain an Euler path if it contains at most two vertices of odd degree.
 //A graph will contain an Euler circuit if all vertices have even degree
 
-//The problem specifies that "the number of intersections with odd degree in a postal route will be at most two"
-//So we already know there's an Euler Path
+//The problem specifies that "the number of intersections with odd degree in a postal route will be at most two" (zero or two)
+//intersections with even degree can be visited on different streets each time (in and out), so it's possible to avoid
+//revisiting streets. For intersections with odd degree at least one street has to be visited twice.
+
+//The optimal route should start in an odd degree street, and the minimal cost is the cost of visiting each street
+//once plus the cost of coming back from the other odd degree street.
 
 #define N ('z' - 'a')
 
-int c[N][N];
+unsigned int c[N][N];
 bool e[N][N];
 int deg[N];
 
@@ -30,17 +31,33 @@ void reset(){
 	}
 }
 
-int cost(int a, int b){
-	if( e[a][b] )
-		return c[a][b];
+unsigned int cost(int a, int b){
+	unsigned int d[N];
+	for( int i = 0; i < N; i++)
+		d[i] = INT_MAX;
 	
-	// int vk = INT_MAX;
-	// int mk = -1;
-	// for( int k = 0; k < N; k++){
-	// 	if( e[a][k] ){
-	// 		int ck = c[a][k] + cost(k, b);
-	// 	}
-	// }
+	d[a] = 0;
+
+	bool updated;
+	for( int i = 0; i < N; i++){
+		updated = false;
+		//For each edge u -> v
+		for( int u = 0; u < N; u++ ){
+			for(int v = 0; v < N; v++ ){
+				if( d[u] == INT_MAX || c[u][v] == INT_MAX )
+					continue;
+
+				if( d[u] + c[u][v] < d[v] ){
+					updated = true;
+					d[v] = d[u] + c[u][v];
+				}
+			}
+		}
+		if( !updated )
+			break;
+	}
+
+	return d[b];
 }
 
 int back_cost() {
@@ -50,7 +67,7 @@ int back_cost() {
 			if( a == -1 )
 				a = i;
 			else
-				b = 1;
+				b = i;
 		}
 	}
 
@@ -69,8 +86,8 @@ int main(){
 	
 	while( std::cin >> street ){
 		
-		if( street.compare("deadend") ){
-			std::cout << cost + back_cost();
+		if( street.compare("deadend")  == 0 ){
+			std::cout << cost + back_cost() << std::endl;
 			reset();
 			cost = 0;
 			continue;
@@ -78,8 +95,8 @@ int main(){
 
 		int len = street.length();
 		int s = street[0] - 'a';
-		int t = street[len - 1];
-
+		int t = street[len - 1] - 'a';
+		//std::cout << street << " " << s << " -> " << t << " : " << len << std::endl;
 		c[s][t] = len;
 		c[t][s] = len;
 		e[s][t] = true;
