@@ -12,27 +12,33 @@ inline int prev(int i, int r, int m){
 	return s % m;
 }
 
-void print_mp(int m, int n){
+int lexic_diff(int a, int b, int n){
+	int d = 0;
+	for( int j = n - 1; j >= 0; j--){
+		if( a - b != 0 )
+			d = a - b;
 
-	// for( int i = 0; i < m; i++)
-	// 	minp[i][0] = -1;
+		a = minp[a][j];
+		b = minp[b][j];
+	}
+
+	return d;
+}
+
+void print_mp(int m, int n){
 	int mp = -1;
+
 	for(int j = 1; j < n; j++){
 		for(int i = 0; i < m; i++){
-			//int cij = c[i][j];
 			mp = prev(i, -1, m);
-			// int mc = c[mp][j - 1];
 
 			for( int r = 0; r <= 1; r++ ){
 				int p = prev(i, r, m);
 				if( c[p][j - 1] < c[mp][j - 1] ){
 					mp = p;
-					// mc = c[p][j - 1];
 				}else if( c[p][j - 1] == c[mp][j - 1] ){
-					if( minp[p][j - 1] < minp[mp][j - 1] )
-						mp = p; 
-					//if( p < mp )
-					//	mp = p;
+					if( lexic_diff(p, mp, j) < 0 )
+						mp = p;
 				}
 			}
 
@@ -42,28 +48,17 @@ void print_mp(int m, int n){
 		}
 	}
 
-	for(int i = 0; i < m; i++){
-		for(int j = 0; j < n; j++)
-			std::printf("%i ", c[i][j]);
-		std::printf("\n");
-	}
-	std::printf("\n");
-
-	for(int i = 0; i < m; i++){
-		for(int j = 0; j < n; j++)
-			std::printf("%i ", minp[i][j]);
-		std::printf("\n");
-	}
-	std::printf("\n");
-
-	// int mc = c[0][n - 1];
-	mp = minp[0][n - 1];
+	mp = 0;
 	
-	for( int i = 1; i < m; i++)
+	for( int i = 1; i < m; i++){
 		if( c[i][n - 1] < c[mp][n - 1] )
 			mp = i;
+		else if( c[i][n - 1] == c[mp][n - 1] ){
+			if( lexic_diff(i, mp, n) < 0 )
+				mp = i;
+		}
+	}
 
-	std::printf("%i\n", mp);
 	int cost = c[mp][n - 1];
 
 	int path[100]; 
@@ -72,8 +67,11 @@ void print_mp(int m, int n){
 		mp = minp[mp][j];
 	}
 
-	for( int j = 0; j < n; j++)
-		std::printf("%i ", path[j] + 1);
+	for( int j = 0; j < n; j++){
+		std::printf("%i", path[j] + 1);
+		if( j != n - 1)			// Without this you'll get a presentation error :(
+			std::printf(" "); 	//
+	}
 	
 	std::printf("\n");
 	
