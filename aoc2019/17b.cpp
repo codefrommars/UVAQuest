@@ -70,7 +70,8 @@ struct Computer{
     int relativeBase;
     int pp;
     __int64* ram;
-    std::deque<__int64>* out_pin;
+    //std::deque<__int64>* out_pin;
+    __int64 out_pin;
 
     //Problem specific
     std::deque<__int64> in_pin;
@@ -160,6 +161,8 @@ void in(Computer* m){
         return;
     }
 
+    int v = m->in_pin.front();
+    //std::cout << "Read: " << v << std::endl;
     setParam(m, 1, m->in_pin.front());
     m->in_pin.pop_front();
 
@@ -177,7 +180,8 @@ int BACK[4] = { 1, 0, 3, 2};
 
 void out(Computer *m){
     __int64 a = getParam(m, 1);
-    m->out_pin->push_back(a);
+    //std::cout << "Pushing : " << a << std::endl;
+    m->out_pin = a;
     
     // int dir = m->in_pin;
 
@@ -402,58 +406,95 @@ int main(){
     //     c.visited[i] = 0;
     // }
     Computer m;
-    std::deque<__int64> output;
+    
 
 
     // m.canvas = &c;
     // m.px = 500;
     // m.py = 500;
     //c.set(500, 500, 1);
+    
 
     m.relativeBase = 0;
     m.ram = new __int64[ 1024 * 1024 ]; // Large Ram
     std::copy(rom.begin(), rom.end(), m.ram);
 
-    m.in_pin = 0;
-    m.out_pin = &output;
+    m.in_pin.clear();
+    m.out_pin = 0;
     
     
     m.status = 0;
     m.pp = 0;
 
-    run(&m);
+    std::string program[5] = { 
+        "A,B,A,B,C,C,B,A,B,C",
+        "L,12,L,10,R,8,L,12",
+        "R,8,R,10,R,12",
+        "L,10,R,12,R,8",
+        "n"
+    };
 
-    int w = -1;
-    int h = 0;
-    bool s = false;
-    std::vector< std::vector<char> > view;
-    view.push_back( std::vector<char>() );
-    //int y = 0, x = 0;
-    for( int i = 0; i < output.size(); i++){
+    //Setup input
+    for( int l = 0; l < 5; l++){
+        std::string p = program[l];
+        for( int i = 0; i < p.size(); i++){
+            m.in_pin.push_back( (int) p[i] );
+        }
+        m.in_pin.push_back( 10 ); //nl
+    }
+
+    // for(int i = 0; i < m.in_pin.size(); i ++){
+    //     std::cout << m.in_pin[i] << " ";
+    // }
+
+    m.ram[0] = 2;
+
+// A,B,A,B,C,C,B,A,B,C
+// abca = A
+// L,12,L,10,R,8,L,12
+// cde = B
+// R,8,R,10,R,12
+// bec = C
+// L,10,R,12,R,8
+
+    //std::cout << m.out_pin->front() << std::endl;
+
+    if( run(&m) != 2 ){
+        std::cout << "Code didn't finish correctly." << std::endl;
+    }
+
+    std::cout << m.out_pin << std::endl;
+    // int w = -1;
+    // int h = 0;
+    // bool s = false;
+    // std::vector< std::vector<char> > view;
+    // view.push_back( std::vector<char>() );
+    // //int y = 0, x = 0;
+    // for( int i = 0; i < output.size(); i++){
         
-        //s = output[i] != 10 | s;
-        //s = (output[i] != 10) | s;
-        if( output[i] == 10 && i != output.size() - 1){
-            if( w == -1 )
-                w = i;
-            //if( s )
-            h++;
-            s = false;
-            //y++;
-            view.push_back( std::vector<char>() );
-        }else{
-            view[h].push_back( (char)output[i] );
-        }
-    }
-    //char** view = new char[h][w];
-    for(int j = 0; j < view.size(); j++){
-        for( int i = 0; i < view[j].size(); i++ ){
-            std::cout << view[j][i];
-        }
-        std::cout << std::endl;
-    }
+    //     //s = output[i] != 10 | s;
+    //     //s = (output[i] != 10) | s;
+    //     if( output[i] == 10 && i != output.size() - 1){
+    //         if( w == -1 )
+    //             w = i;
+    //         //if( s )
+    //         h++;
+    //         s = false;
+    //         //y++;
+    //         view.push_back( std::vector<char>() );
+    //     }else{
+    //         view[h].push_back( (char)output[i] );
+    //     }
+    // }
+    // //char** view = new char[h][w];
+    // for(int j = 0; j < view.size(); j++){
+    //     for( int i = 0; i < view[j].size(); i++ ){
+    //         std::cout << view[j][i];
+    //     }
+    //     std::cout << std::endl;
+    // }
 
-    showScaffold(view, w, h);
+    // showScaffold(view, w, h);
 
     //std::cout << findAlignParams(view, w, h) << std::endl;
     // for( int i = 0; i < output.size(); i++){ 
