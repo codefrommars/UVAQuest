@@ -5,6 +5,8 @@
 #include <set>
 #include <array>
 
+#define MAX_LEN ('z' - 'A')
+#define KEYS_LEN ('z' - 'a')
 
 struct Coord{
     int x, y;
@@ -84,13 +86,16 @@ void buildDeps(std::vector< std::string > map, int x, int y, int cDep, int* deps
         if( map[ny][nx] >= 'A' && map[ny][nx] <= 'Z' ){
             int index = map[ny][nx] - 'A';
             deps[index] = cDep;
-            buildDeps(map, nx, ny, map[ny][nx] - 'A', deps, BACK[dir]);
+            buildDeps(map, nx, ny, index, deps, BACK[dir]);
             continue;
         }
 
         if( map[ny][nx] >= 'a' && map[ny][nx] <= 'z' ){
             int index = map[ny][nx] - 'A';
             deps[index] = cDep;
+            buildDeps(map, nx, ny, index, deps, BACK[dir]);
+            continue;
+
             //std::cout << "Dep [" << (char)(index + 'A') << "] = " << " = " << (char) ( deps[index] + 'A') << std::endl;
         }
 
@@ -121,15 +126,19 @@ int computeDist(std::vector< std::string > map, int x, int y, char target, int d
     return min;
 }
 
-void buildDist(std::vector< std::string > map, std::map< char, Coord > keys, int** dist){
+void buildDist(std::vector< std::string > map, int ox, int oy, std::map< char, Coord > keys, int** dist){
     //std::cout << "Building dist" << std::endl;
     for (auto a = keys.begin(); a != keys.end(); ++a){
         for (auto b = keys.begin(); b != keys.end(); ++b){
             //std::cout << a->first << " vs " << b->first << std::endl;
-            if( a->first == b->first )
-                continue;
             int iA = a->first - 'a';
             int iB = b->first - 'a';
+
+            if( iA == iB ){
+                dist[iA][iA] = computeDist(map, ox, oy, a->first, 0, -1);
+                //std::cout << "From o to " << a->first << ": " << dist[iA][iA] << std::endl;
+                continue;
+            }
 
             if( dist[iA][iB] != -1 )
                 continue;
@@ -209,8 +218,49 @@ int countDeps(int* deps, char a){
     return count;
 }
 
-#define MAX_LEN ('z' - 'A')
-#define KEYS_LEN ('z' - 'a')
+// int depOf(int* deps, int key, bool door){
+//     if( key >= 'a' && key <= 'b' )
+// }
+
+
+
+struct PlanNode{
+    int dst;
+    int prev[KEYS_LEN];
+};
+
+inline int toKey(int k){
+    if( k > KEYS_LEN )
+        return k - ('a' - 'A');
+    
+    return k;
+}
+
+bool canJump( PlanNode &pp, int k, int* deps ){
+    // for(int j = 0; j < KEYS_LEN; j++)
+    //     std::cout << pp.prev[j] << " ";
+    // std::cout << std::endl;
+    //k always a key
+    char q = k + ('a' - 'A');
+    //int dq = deps[q];
+    // for( int i = 0; i < KEYS_LEN; i++ )
+    //     std::cout << "Prev: " << plan[o-1][p].prev[i] << " ";
+    //std::cout <<"q: " << (char)(q + 'A') << " -> "<< (char)(deps[q] + 'A') << std::endl;
+    
+
+    while( deps[q] != -1 ){
+        // std::cout << "p: " << p;
+        int t = deps[q];
+        if( t > KEYS_LEN )
+            t -= ('a' - 'A');
+        //std::cout << "Checking " << (char)(t + 'A') << " (real: " <<(char)(deps[q] + 'A') << ") in the history" << std::endl;
+        if( pp.prev[ t ] < 0 ) //doesn't satisfy a dependency, can't jump p -> k
+            return false;
+
+        q = deps[q];
+    }
+    return true;
+}
 
 int main() {
 
@@ -228,9 +278,9 @@ int main() {
     for(int i = 0; i < KEYS_LEN; i++){
         dist[i] = new int[KEYS_LEN];
         for(int j = 0; j < KEYS_LEN; j++){
-            if( i == j )
-                dist[i][j] = 0;
-            else
+            // if( i == j )
+            //     dist[i][j] = 0;
+            // else
                 dist[i][j] = -1;
         }
     }
@@ -265,39 +315,131 @@ int main() {
     }
 
     buildDeps(input, x, y, -1, deps, -1);
-    buildDist(input, keys, dist);
 
+
+    buildDist(input, x, y, keys, dist);
 
     std::cout << x << ", " << y << " Keys: " << keys.size() << std::endl;
 
-    std::cout << countDeps( deps, 'p' );
 
-    int** plan = new int*[keys.size()];
+    //std::cout << countDeps( deps, 'p' ) << std::endl;
+
     for(int i = 0; i < keys.size(); i++){
-        plan[i] = new int[KEYS_LEN];
-        for(int j = 0; j < KEYS_LEN; j++)
-            plan[i][j] = -1;
+        for(int j = 0; j < keys.size(); j++){
+            std::cout << dist[i][j] << " ";
+        }
+        std::cout << std::endl;
     }
 
-    for( int o = 0; o < keys.size(); o++ ) {
-        for( int k = 0; k < KEYS_LEN; k++ ){
-            char key = k + 'a';
-            if( keys.count(key) == 0)
-                continue;
-            
-            if( countDeps(deps, key) > o ) 
-                continue;
-            
-            plan[o][k] = 
+    for(int i = 0; i < MAX_LEN; i++){
+        if( deps[i] != -1 ){
+            std::cout << (char) (i + 'A') << " -> " << (char) (deps[i] + 'A') << std::endl;
         }
     }
 
+
+    PlanNode pp;
+    for(int j = 0; j < KEYS_LEN; j++)
+        pp.prev[j] = -1;
+    int to = 'p' - 'a';
+    pp.prev['c' - 'a'] = -1;
+    pp.prev['h' - 'a'] = 'c' - 'a';
+    pp.prev['e' - 'a'] = 'h' - 'a';
+    // pp.prev['d' - 'a'] = -1;
+    // pp.prev['d' - 'a'] = -1;
+    // pp.prev['d' - 'a'] = -1;
+
+    std::cout << "Query: " << canJump(pp, to, deps) << std::endl;
+
     // for(int i = 0; i < KEYS_LEN; i++){
-    //     for(int j = 0; j < KEYS_LEN; j++){
-    //         std::cout << dist[i][j] << " ";
-    //     }
-    //     std::cout << std::endl;
+    //     std::cout << deps[i] << " ";
     // }
+
+    PlanNode** plan = new PlanNode*[keys.size()];
+    for(int i = 0; i < keys.size(); i++){
+        plan[i] = new PlanNode[keys.size()];        
+    }
+
+    for( int i = 0; i < keys.size(); i++ ){
+        //std::cout << deps[i] << " ";
+        for(int j = 0; j < keys.size(); j++)
+            plan[0][i].prev[j] = -1;
+        //std::cout << deps[i + 'A'] << " ";
+        if( deps[i + 'a' - 'A'] == -1 ){
+            plan[0][i].dst = dist[i][i];
+            plan[0][i].prev[i] = 0;
+        }else{
+            plan[0][i].dst = 1000000;
+        }
+
+        std::cout << plan[0][i].dst << " ";
+    }
+
+
+    std::cout << std::endl;
+
+    for( int o = 1; o < keys.size(); o++ ) {
+        //For each rank (order)
+        for( int k = 0; k < keys.size(); k++ ){
+            //Find best for k in rank o
+            int min = 1000000;
+            int min_p = -1;
+            for( int p = 0; p < keys.size(); p++){
+                // Check jump from p to k
+                // if( p == k ) //Don't stay in the same node
+                //     continue;
+                //std::cout << "Plan: " << plan[o-1][p].dst << std::endl;
+                // if( plan[o-1][p].dst == -1 )
+                //     continue;
+                if( plan[o-1][p].prev[k] != -1 ) //Already visited k
+                    continue;
+
+                //Does it have all the dependencies?
+                if( !canJump(plan[o-1][p], k, deps) )
+                    continue;
+                
+                //Satisfy all dependencies.
+                if( dist[p][k] + plan[o-1][p].dst < min){
+                    min = dist[p][k] + plan[o-1][p].dst;
+                    min_p = p;
+                }
+            }            
+            if( min_p != -1 ){
+                //Best for k at o is coming from min_p, at distance min
+                //std::cout << "Best for (o, k) : " << o << ", " << k << " = " << min_p << " ** " << dist[min_p][k] <<std::endl;
+                plan[o][k].dst = min;
+                for( int i = 0; i < KEYS_LEN; i++ )
+                    plan[o][k].prev[i] = plan[o - 1][min_p].prev[i];
+
+                plan[o][k].prev[k] = o;
+            }else{
+                plan[o][k].dst = 1000000;
+                //std::cout << "No plan for " << (char)(k + 'a') << " at  " << o << std::endl ;    
+            }
+
+            std::cout << plan[o][k].dst << " ";
+        }
+
+        std::cout << std::endl;
+    }
+
+    int last = keys.size() - 1;
+    int min = 1000000;
+    int m = -1;
+    for( int k = 0; k < keys.size(); k++ ){
+        if( plan[last][k].dst < min ){
+            min = plan[last][k].dst;
+            m = k;
+        }
+    }
+    std::cout << min << std::endl;
+    for(int i = 0; i < keys.size(); i++ )
+        std::cout << (char)(i + 'a') << " ";
+    std::cout << std::endl;
+    for(int i = 0; i < keys.size(); i++ )
+        std::cout << plan[last][m].prev[i] << " ";
+
+
 
     // for(int i = 0; i < MAX_LEN; i++){
     //     if( (int)deps[i] != -1 ){
