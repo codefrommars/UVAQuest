@@ -4,9 +4,13 @@
 #include <map>
 #include <set>
 #include <array>
+#include <bitset>
+#include <queue>
 
-#define MAX_LEN ('z' - 'A')
-#define KEYS_LEN ('z' - 'a')
+
+#define MAX_LEN ('z' - 'A' + 1)
+#define ORIGIN ('z' - 'a' + 1)
+#define KEYS_LEN ('z' - 'a' + 2) // @ -> 0
 
 struct Coord{
     int x, y;
@@ -21,93 +25,294 @@ int DIRS[4][2] = {
 
 int BACK[4] = { 1, 0, 3, 2};
 
-struct Move{    
-    int x, y, distance;
-};
-
-struct State{
-    std::vector< std::string > map;    
-    bool keys[26] = { false };
-    int keysLeft;
-};
-
-bool hasKey(State& s, char key){
-    return s.keys[ key - 'a' ];
-}
-
-bool setKey(State& s, char key, bool value){
-    return s.keys[ key - 'a' ] = value;
-}
-
-bool isBlocked(State &s, int nx, int ny){
-    if( s.map[ny][nx] == '#' )
-        return true;
-    
-    if( s.map[ny][nx] >= 'A' && s.map[ny][nx] <= 'Z' )
-        return !hasKey(s, s.map[ny][nx] + 32 );
-
-    return false;
-}
-
-void addMove(std::vector<Move> &moves, int x, int y, int dst ){
-    for(int i = 0; i < moves.size(); i++){
-        if( moves[i].x == x && moves[i].y == y ){
-            if( dst < moves[i].distance ){
-                moves[i].distance = dst;                
-            }
-            return;
-        }
-    }
-
-    Move m;
-    m.x = x;
-    m.y = y;
-    m.distance = dst;
-    moves.push_back(m);
-
-}
+typedef std::bitset<KEYS_LEN> KeySet;
 
 // struct Path{
 //     int dst;
-//     std::set<char> &doors;
+//     unsigned long keys;
+// };
+
+
+
+// void explore(int** visited, std::vector< std::string > map, std::queue<unsigned long> &paths, int src, int x, int y, int dst, KeySet cDep, int bd){
+//     if( visited[y][x] == 1 )
+//         return;
+    
+//     visited[y][x] = 1;
+
+    
+
+//     for( int dir = 0; dir < 4; dir++ ){
+//         if( dir == bd )
+//             continue;
+                
+//         int nx = x + DIRS[dir][0];
+//         int ny = y + DIRS[dir][1];        
+
+//         if( map[ny][nx] == '#' )
+//             continue;
+        
+//         if( map[ny][nx] >= 'A' && map[ny][nx] <= 'Z' ){
+//             int index = map[ny][nx] - 'A';
+//             cDep.set(index);
+//             // //std::cout << "Adding key: " << index ;
+//             // kCount[index]++;
+//             // //std::cout << " was OK " << std::endl;
+//             explore(visited, map, paths, src, nx, ny, dst + 1, cDep, BACK[dir]);
+//             // kCount[index]--;
+//             // if( kCount[index] == 0 )
+//             cDep.reset(index);
+//             continue;
+//         }
+
+//         bool isGoal = map[ny][nx] == '@' || (map[ny][nx] >= 'a' && map[ny][nx] <= 'z');
+
+//         if( isGoal ){
+//             int index = map[ny][nx] - 'a';
+
+//             if( map[ny][nx] == '@' )
+//                 index = ORIGIN;
+
+//             if( index == src )
+//                 continue;
+
+//             std::cout<< "Found: " << (char)(index + 'a') << std::endl;
+
+//             paths.push(index);
+//             paths.push(nx);
+//             paths.push(ny);
+//             paths.push(cDep.to_ulong());
+//             paths.push(dst);
+
+//             // if( index != ORIGIN )
+//             //     cDep.set(index);
+
+//             // explore(visited, map, paths, src, nx, ny, dst + 1, cDep, BACK[dir]);
+//             // if( index != ORIGIN )
+//             //     cDep.reset(index);
+
+//             // if( paths[index].count(cDep) == 1 ){
+//             //     if( paths[index][cDep.to_ulong()] >= dst ){
+//             //         continue;
+//             //     }
+//             // }
+
+//             // paths[index][cDep.to_ulong()] = dst;
+
+//             // std::cout << "Setting: " << (char)(index + 'a');
+//             // kDeps[index] = cDep;
+//             // std::cout << " was OK " << std::endl;
+//             // std::cout << "Way to " << (char)( index + 'a' ) << " : " << cDep << std::endl;
+//             // cDep.set(index);
+//             // kCount[index]++;
+//             // buildKeyDeps(visited, map, nx, ny, cDep,kCount, kDeps, BACK[dir]);
+//             // kCount[index]--;
+//             // if( kCount[index] == 0 )
+//             //     cDep.reset(index);//Remove the dependency
+//             // //std::cout << "Dep [" << (char)(index + 'A') << "] = " << " = " << (char) ( deps[index] + 'A') << std::endl;
+//             continue;
+//         }
+//         explore(visited, map, paths, src, nx, ny, dst + 1, cDep, BACK[dir]);
+//     }
+
+//     visited[y][x] = 0;
 // }
 
-void buildDeps(std::vector< std::string > map, int x, int y, int cDep, int* deps, int bd) {
+// void buildMatrix(bool* keysVisited, int** visited, std::vector< std::string > map, std::map<unsigned long, int>** matrix, int src, int x, int y){
+//     // bool keysVisited[KEYS_LEN] = { false };
+//     if( keysVisited[src] )
+//         return;
+   
+//     std::cout<< "Testing: " << (char)(src + 'a') << std::endl;
+//     std::queue<unsigned long> q;
+//     //for(int dir = 0; dir < 4; dir++){
+//     explore(visited, map, q, src, x, y, 0, KeySet(), -1);
+//     //}
+//     std::cout<< "Recovered: " << (q.size() / 5) << std::endl;
+
+//     keysVisited[src] = true;
+
+//     while ( q.size() > 0 ){
+//         int tgt = q.front(); q.pop();
+//         int nx = q.front(); q.pop();
+//         int ny = q.front(); q.pop();
+//         int cDepMask = q.front(); q.pop();
+//         int dst = q.front(); q.pop();
+        
+//         if( matrix[src][tgt].count(cDepMask) == 1 ){
+//             if( matrix[src][tgt][cDepMask] >= dst ){
+//                 continue;
+//             }
+//         }
+
+//         matrix[src][tgt][cDepMask] = dst;
+        
+//         if( tgt == ORIGIN )
+//             continue;
+
+//         buildMatrix(keysVisited, visited, map, matrix, tgt, nx, ny);
+//     }
+
+//     // std::queue<unsigned long> q;
+//     // q.push(src);
+//     // q.push(x);
+//     // q.push(y);
+//     // q.push(0);
+//     // q.push(0);
+
+//     // while( q.size() > 0 ){
+//     //     int src = q.front(); q.pop();
+//     //     int sx = q.front(); q.pop();
+//     //     int sy = q.front(); q.pop();
+//     //     int keys = q.front(); q.pop();
+//     //     int dst = q.front(); q.pop();
+
+//     //     for(int dir = 0; dir < 4; dir++){
+//     //         explore(visited, map, q, int src, int x, int y, int dst, KeySet cDep, int bd
+//     //     }
+//     // }
+
+// }
+void explore(int** visited, std::vector< std::string > map, std::queue<unsigned long> &paths, int src, int x, int y, int dst, KeySet cDep, int bd){
+    if( visited[y][x] == 1 )
+        return;
+    
+    visited[y][x] = 1;
+
+    
+
     for( int dir = 0; dir < 4; dir++ ){
         if( dir == bd )
             continue;
                 
         int nx = x + DIRS[dir][0];
-        int ny = y + DIRS[dir][1];
+        int ny = y + DIRS[dir][1];        
 
         if( map[ny][nx] == '#' )
             continue;
         
         if( map[ny][nx] >= 'A' && map[ny][nx] <= 'Z' ){
             int index = map[ny][nx] - 'A';
-            deps[index] = cDep;
-            buildDeps(map, nx, ny, index, deps, BACK[dir]);
+            cDep.set(index);
+            // //std::cout << "Adding key: " << index ;
+            // kCount[index]++;
+            // //std::cout << " was OK " << std::endl;
+            explore(visited, map, paths, src, nx, ny, dst + 1, cDep, BACK[dir]);
+            // kCount[index]--;
+            // if( kCount[index] == 0 )
+            cDep.reset(index);
             continue;
         }
 
-        if( map[ny][nx] >= 'a' && map[ny][nx] <= 'z' ){
-            int index = map[ny][nx] - 'A';
-            deps[index] = cDep;
-            buildDeps(map, nx, ny, index, deps, BACK[dir]);
+        bool isGoal = map[ny][nx] == '@' || (map[ny][nx] >= 'a' && map[ny][nx] <= 'z');
+
+        if( isGoal ){
+            int index = map[ny][nx] - 'a';
+
+            if( map[ny][nx] == '@' )
+                index = ORIGIN;
+
+            if( index == src )
+                continue;
+
+            //std::cout<< "Found: " << (char)(index + 'a') << std::endl;
+
+            paths.push(index);
+            paths.push(nx);
+            paths.push(ny);
+            paths.push(cDep.to_ulong());
+            paths.push(dst);
+
+            if( index != ORIGIN )
+                cDep.set(index);
+
+            explore(visited, map, paths, src, nx, ny, dst + 1, cDep, BACK[dir]);
+
+            if( index != ORIGIN )
+                cDep.reset(index);
             continue;
-
-            //std::cout << "Dep [" << (char)(index + 'A') << "] = " << " = " << (char) ( deps[index] + 'A') << std::endl;
         }
-
-        buildDeps(map, nx, ny, cDep, deps, BACK[dir]);
+        explore(visited, map, paths, src, nx, ny, dst + 1, cDep, BACK[dir]);
     }
+
+    visited[y][x] = 0;
 }
 
-int computeDist(std::vector< std::string > map, int x, int y, char target, int dst, int bd){
-    if( map[y][x] == target )
-        return dst;
+void buildMatrix(bool* keysVisited, int** visited, std::vector< std::string > map, std::map<unsigned long, int>** matrix, int src, int x, int y){
+    // bool keysVisited[KEYS_LEN] = { false };
+    // if( keysVisited[src] )
+    //     return;
+   
+    //std::cout<< "Testing: " << (char)(src + 'a') << std::endl;
+    std::queue<unsigned long> q;
+    //for(int dir = 0; dir < 4; dir++){
+    explore(visited, map, q, src, x, y, 0, KeySet(), -1);
+    //}
+    //std::cout<< "Recovered: " << (q.size() / 5) << std::endl;
 
-    int min = 9999999;
+    // keysVisited[src] = true;
+
+    while ( q.size() > 0 ){
+        int tgt = q.front(); q.pop();
+        int nx = q.front(); q.pop();
+        int ny = q.front(); q.pop();
+        int cDepMask = q.front(); q.pop();
+        int dst = q.front(); q.pop();
+        
+        if( matrix[src][tgt].count(cDepMask) == 1 ){
+            if( matrix[src][tgt][cDepMask] >= dst ){
+                continue;
+            }
+        }
+
+        matrix[src][tgt][cDepMask] = dst;
+        
+        // if( tgt == ORIGIN )
+        //     continue;
+
+        // buildMatrix(keysVisited, visited, map, matrix, tgt, nx, ny);
+    }
+
+}
+// void pushEvents(std::deque<int> &pos, std::vector< std::string > map, int x, int y, int bd){
+//     for( int dir = 0; dir < 4; dir++ ){
+//         if( dir == bd )
+//             continue;
+                
+//         int nx = x + DIRS[dir][0];
+//         int ny = y + DIRS[dir][1];
+
+//         if( map[ny][nx] == '#' )
+//             continue;
+        
+//         if( (map[ny][nx] >= 'A' && map[ny][nx] <= 'Z') || (map[ny][nx] >= 'a' && map[ny][nx] <= 'z')){
+//             pos.push_back(nx);
+//             pos.push_back(ny);
+//             continue;
+//         }
+
+//         pushEvents(map, nx, ny, cDep, kDeps, BACK[dir]);
+//     }
+// }
+// void buildKeyDeps(std::vector< std::string > map, int x, int y, KeySet cDep, KeySet* kDeps){
+//     std::deque<int> pos;
+
+//     pos.push_back(x);
+//     pos.push_back(y);
+//     pos.push_back(-1);
+//     while( pos.size() > 0 ){
+
+//         for( int dir = 0; dir < 4; dir++ ){
+//             pushEvents()
+//         }
+//     }
+// }
+void buildKeyDeps(int** visited, std::vector< std::string > map, int x, int y, KeySet cDep, int* kCount, KeySet* kDeps, int bd){
+    // std::cout << " Visited: " << visited[y][x] << std::endl ;
+    if( visited[y][x] == 1 )
+        return;
+    
+    visited[y][x] = 1;
 
     for( int dir = 0; dir < 4; dir++ ){
         if( dir == bd )
@@ -116,43 +321,58 @@ int computeDist(std::vector< std::string > map, int x, int y, char target, int d
         int nx = x + DIRS[dir][0];
         int ny = y + DIRS[dir][1];
 
+        
+
         if( map[ny][nx] == '#' )
             continue;
-
-        int cDist = computeDist(map, nx, ny, target, dst + 1, BACK[dir]);
-        if( cDist < min)
-            min = cDist;
-    }
-    return min;
-}
-
-void buildDist(std::vector< std::string > map, int ox, int oy, std::map< char, Coord > keys, int** dist){
-    //std::cout << "Building dist" << std::endl;
-    for (auto a = keys.begin(); a != keys.end(); ++a){
-        for (auto b = keys.begin(); b != keys.end(); ++b){
-            //std::cout << a->first << " vs " << b->first << std::endl;
-            int iA = a->first - 'a';
-            int iB = b->first - 'a';
-
-            if( iA == iB ){
-                dist[iA][iA] = computeDist(map, ox, oy, a->first, 0, -1);
-                //std::cout << "From o to " << a->first << ": " << dist[iA][iA] << std::endl;
-                continue;
-            }
-
-            if( dist[iA][iB] != -1 )
-                continue;
-            //std::cout << "CompDist " << a->second.x << ", " << a->second.y << ", " << b->first << std::endl;
-            dist[iA][iB] = computeDist(map, a->second.x, a->second.y, b->first, 0, -1);
-            dist[iB][iA] = dist[iA][iB];               
+        
+        if( map[ny][nx] >= 'A' && map[ny][nx] <= 'Z' ){
+            int index = map[ny][nx] - 'A';
+            //std::cout << "Adding key: " << index ;
+            cDep.set(index);
+            kCount[index]++;
+            //std::cout << " was OK " << std::endl;
+            buildKeyDeps(visited, map, nx, ny, cDep, kCount, kDeps, BACK[dir]);
+            kCount[index]--;
+            if( kCount[index] == 0 )
+                cDep.reset(index);//Remove the dependency
+            continue;
         }
-    }
-}
-// bool buildDeps(std::vector< std::string > map, int x, int y, int dst, int* deps, int bd) {
 
-//     if( map[y][x] == goal ){
+        if( map[ny][nx] >= 'a' && map[ny][nx] <= 'z' ){
+            int index = map[ny][nx] - 'a';
+            // std::cout << "Setting: " << (char)(index + 'a');
+            kDeps[index] = cDep;
+            // std::cout << " was OK " << std::endl;
+            // std::cout << "Way to " << (char)( index + 'a' ) << " : " << cDep << std::endl;
+            cDep.set(index);
+            kCount[index]++;
+            buildKeyDeps(visited, map, nx, ny, cDep,kCount, kDeps, BACK[dir]);
+            kCount[index]--;
+            if( kCount[index] == 0 )
+                cDep.reset(index);//Remove the dependency
+            continue;
+            //std::cout << "Dep [" << (char)(index + 'A') << "] = " << " = " << (char) ( deps[index] + 'A') << std::endl;
+        }
+
+        buildKeyDeps(visited, map, nx, ny, cDep, kCount,kDeps, BACK[dir]);
+    }
+
+    visited[y][x] = 0;
+}
+
+// int computeDist(int** visited, std::vector< std::string > map, int x, int y, char target, int dst, int bd){
+
+//     if( map[y][x] == target )
 //         return dst;
-//     }
+
+//     int min = 9999999;
+
+//     if( visited[y][x] == 1 )
+//         return min;
+    
+//     visited[y][x] = 1;
+
 
 //     for( int dir = 0; dir < 4; dir++ ){
 //         if( dir == bd )
@@ -161,121 +381,228 @@ void buildDist(std::vector< std::string > map, int ox, int oy, std::map< char, C
 //         int nx = x + DIRS[dir][0];
 //         int ny = y + DIRS[dir][1];
 
-//         if( s.map[ny][nx] >= 'a' && s.map[ny][nx] <= 'z' && !hasKey(s, s.map[ny][nx]) ){
-//             addMove(moves, nx, ny, dst + 1);            
-//             continue;
-//         }
-        
-//         if( isBlocked(s, nx, ny) )
+//         if( map[ny][nx] == '#' )
 //             continue;
 
-//         findMoves(s, moves, nx, ny, dst + 1, BACK[dir]);
+//         int cDist = computeDist(visited,map, nx, ny, target, dst + 1, BACK[dir]);
+//         if( cDist < min)
+//             min = cDist;
 //     }
-// }
 
-// int getKeys(State &s, int x, int y, int dst) {
-
-//     if( s.keysLeft == 0 ){
-//        // std::cout << "Returning: "<< dst << std::endl;
-//         return dst;
-//     }
-    
-//     //Find possibilities
-//     std::vector<Move> moves;
-//     findMoves(s, moves, x, y, 0, -1);
-
-//     int min = 1000000;
-
-//     for( int i = 0; i < moves.size(); i++ ){
-//         //perform move.
-//         char k = s.map[ moves[i].y ][ moves[i].x ];
-//         std::cout << k << ",";
-//         //std::cout << "Move: "<< moves[i].x << ", " << moves[i].y << ": " << moves[i].distance << std::endl;
-//         setKey(s, k, true );
-//         s.keysLeft --;
-
-//         int cost = getKeys(s, moves[i].x, moves[i].y, moves[i].distance + dst);
-
-//         if( cost < min )
-//             min = cost;
-
-//         setKey(s, k, false );
-//         s.keysLeft ++;
-//     }
+//     visited[y][x] = 0;
 
 //     return min;
 // }
 
-int countDeps(int* deps, char a){
-    int index = a - 'A';
-    int count = 0;
-    while( deps[index] != -1 ){
-       // std::cout << "Depends on: " << deps[index] + 'A'
-        index = deps[index];
-        count++;
+// void buildDist(int** visited, std::vector< std::string > map, int ox, int oy, std::map< char, Coord > keys, int** dist){
+//     //std::cout << "Building dist" << std::endl;
+//     for (auto a = keys.begin(); a != keys.end(); ++a){
+//         for (auto b = keys.begin(); b != keys.end(); ++b){
+//             //std::cout << a->first << " vs " << b->first << std::endl;
+//             int iA = a->first - 'a';
+//             int iB = b->first - 'a';
+           
+//             if( dist[iA][iB] != -1 )
+//                 continue;
+
+//             if( iA == iB ){
+//                 std::cout  << "Computing @->" << a->first << std::endl;
+//                 dist[iA][iA] = computeDist(visited,map, ox, oy, a->first, 0, -1);
+//                 //std::cout << "From o to " << a->first << ": " << dist[iA][iA] << std::endl;
+//                 continue;
+//             }
+
+//             std::cout  << "Computing " << a->first <<" -> " << b->first << std::endl;
+            
+//             //std::cout << "CompDist " << a->second.x << ", " << a->second.y << ", " << b->first << std::endl;
+//             dist[iA][iB] = computeDist(visited,map, a->second.x, a->second.y, b->first, 0, -1);
+//             dist[iB][iA] = dist[iA][iB];               
+//         }
+//     }
+//     for( int j = 0; j < KEYS_LEN; j++){
+//         for( int i = 0; i < KEYS_LEN; i++)
+//             std::cout << dist[j][i] << " ";
+//         std::cout << std::endl;
+//     }
+// }
+void computeDist(int** visited, std::vector< std::string > map, int x, int y, int* distRow, int dst, int bd){
+
+    if( map[y][x] >= 'a' && map[y][x] <= 'z' ){
+        int index = map[y][x] - 'a';
+        // int cDist = computeDist(visited,map, nx, ny, distRow, dst + 1, BACK[dir]);
+        // if( cDist < min)
+        //     distRow
+        //     min = cDist;
+        if( (distRow[index] == -1) || ( dst < distRow[index] ) )
+            distRow[index] = dst;
     }
 
-    return count;
+    //int min = 9999999;
+
+    if( visited[y][x] == 1 )
+        return;
+    
+    visited[y][x] = 1;
+
+
+    for( int dir = 0; dir < 4; dir++ ){
+        if( dir == bd )
+            continue;
+                
+        int nx = x + DIRS[dir][0];
+        int ny = y + DIRS[dir][1];
+
+        if( map[ny][nx] == '#' )
+            continue;
+
+        // if( map[ny][nx] >= 'a' && map[ny][nx] <= 'z' ){
+        //     int index = map[ny][nx] - 'a';
+        //     // int cDist = computeDist(visited,map, nx, ny, distRow, dst + 1, BACK[dir]);
+        //     // if( cDist < min)
+        //     //     distRow
+        //     //     min = cDist;
+        //     if( (distRow[index] == -1) || ( dst < distRow[index] ) )
+        //         distRow[index] = dst;
+        // }
+        computeDist(visited,map, nx, ny, distRow, dst + 1, BACK[dir]);
+    }
+
+    visited[y][x] = 0;
+
 }
 
-// int depOf(int* deps, int key, bool door){
-//     if( key >= 'a' && key <= 'b' )
-// }
-
-
-
-struct PlanNode{
-    int dst;
-    int prev[KEYS_LEN];
-};
-
-inline int toKey(int k){
-    if( k > KEYS_LEN )
-        return k - ('a' - 'A');
+void buildDist(int** visited, std::vector< std::string > map, int ox, int oy, std::map< char, Coord > keys, int** dist){
+    //std::cout << "Building dist" << std::endl;
     
-    return k;
+
+
+    for (auto a = keys.begin(); a != keys.end(); ++a){
+        int iA = a->first - 'a';
+        std::cout  << "Computing " << a->first << std::endl;
+        computeDist(visited, map, a->second.x, a->second.y, dist[iA], 0, -1);
+       
+        // for (auto b = keys.begin(); b != keys.end(); ++b){
+        //     //std::cout << a->first << " vs " << b->first << std::endl;
+        //     int iA = a->first - 'a';
+        //     int iB = b->first - 'a';
+           
+        //     if( dist[iA][iB] != -1 )
+        //         continue;
+
+        //     if( iA == iB ){
+        //         // std::cout  << "Computing @->" << a->first << std::endl;
+        //         // dist[iA][iA] = computeDist(visited,map, ox, oy, a->first, 0, -1);
+        //         //std::cout << "From o to " << a->first << ": " << dist[iA][iA] << std::endl;
+        //         continue;
+        //     }
+
+        //     std::cout  << "Computing " << a->first <<" -> " << b->first << std::endl;
+            
+        //     //std::cout << "CompDist " << a->second.x << ", " << a->second.y << ", " << b->first << std::endl;
+        //     dist[iA][iB] = computeDist(visited,map, a->second.x, a->second.y, b->first, 0, -1);
+        //     dist[iB][iA] = dist[iA][iB];               
+        // }
+    }
+
+    int originDist[KEYS_LEN];
+    
+    for( int i = 0; i < KEYS_LEN; i++)
+        originDist[i] = -1;
+    std::cout  << "Computing @" << std::endl;
+    computeDist(visited, map, ox, oy, &originDist[0], 0, -1);
+
+    for( int i = 0; i < KEYS_LEN; i++)
+        dist[i][i] = originDist[i];
+
+     for( int j = 0; j < KEYS_LEN; j++){
+        for( int i = 0; i < KEYS_LEN; i++)
+            std::cout << dist[j][i] << " ";
+        std::cout << std::endl;
+     }
 }
 
-bool canJump( PlanNode &pp, int k, int* deps ){
-    // for(int j = 0; j < KEYS_LEN; j++)
-    //     std::cout << pp.prev[j] << " ";
-    // std::cout << std::endl;
-    //k always a key
-    char q = k + ('a' - 'A');
-    //int dq = deps[q];
-    // for( int i = 0; i < KEYS_LEN; i++ )
-    //     std::cout << "Prev: " << plan[o-1][p].prev[i] << " ";
-    //std::cout <<"q: " << (char)(q + 'A') << " -> "<< (char)(deps[q] + 'A') << std::endl;
-    
+bool isValidState(int k, KeySet keys, KeySet* kDep){
+    //std::cout << kDep[k] << std::endl;
+    for( int i = 0 ; i < keys.size(); i++) {
 
-    while( deps[q] != -1 ){
-        // std::cout << "p: " << p;
-        int t = deps[q];
-        if( t > KEYS_LEN )
-            t -= ('a' - 'A');
-        //std::cout << "Checking " << (char)(t + 'A') << " (real: " <<(char)(deps[q] + 'A') << ") in the history" << std::endl;
-        if( pp.prev[ t ] < 0 ) //doesn't satisfy a dependency, can't jump p -> k
+        if( !keys.test(i) )
+            continue;
+
+        //i is in the keysset
+        if( kDep[i].test(k) )
             return false;
-
-        q = deps[q];
     }
     return true;
 }
 
-int main() {
+int getCost(int k, KeySet keys, KeySet* kDep, int** dist, std::map< unsigned long, int > * mem){
+    // std::cout << "Finding: " << k << ": " << keys << std::endl;
+    if( mem[k].count(keys.to_ulong()) == 1 ){        
+        return mem[k][keys.to_ulong()];
+    }
+    // std::cout << "Computing: " << k << ": " << keys << std::endl;
 
+    if( keys.count() == 1 )
+        return dist[k][k];
+    
+    keys.reset(k);
+    int min = 1000000;
+    for( int j = 0; j < keys.size(); j++ ){
+        if( !keys.test(j) )
+            continue;
+        if(!isValidState(j, keys, kDep) ){
+            //std::cout << "Invalid: " << j << ": " << keys << std::endl;
+            continue;
+        }
+
+        int cost = getCost(j, keys, kDep, dist, mem) + dist[j][k];
+        if( cost < min )
+            min = cost;
+    }
+    keys.set(k);
+
+    mem[k][keys.to_ulong()] = min;
+
+    return min;
+}
+
+int getMinCost(KeySet keys, KeySet* kDep, int** dist, std::map< unsigned long, int > * mem){
+    int min = 1000000;
+    for( int j = 0; j < keys.size(); j++ ){
+        if( !keys.test(j) )
+            continue;
+
+        if(!isValidState(j, keys, kDep) ){
+        //std::cout << "Invalid: " << j << ": " << keys << std::endl;
+            continue;
+        }
+
+        int cost = getCost(j, keys, kDep, dist, mem);
+        if( cost < min )
+            min = cost;
+    }
+
+    return min;
+}
+
+
+int main() {
     std::vector< std::string > input;
     std::map< char, Coord > keys;
     std::string line;
 
     int* deps = new int[ MAX_LEN];
+    KeySet* kDep = new KeySet[KEYS_LEN];
 
     for(int i = 0; i < MAX_LEN; i++){
         deps[i] = -1;
     }
 
+    int* kCount = new int[KEYS_LEN];
     int** dist = new int*[KEYS_LEN];
     for(int i = 0; i < KEYS_LEN; i++){
+        kDep[i].reset();
+        kCount[i] = 0;
         dist[i] = new int[KEYS_LEN];
         for(int j = 0; j < KEYS_LEN; j++){
             // if( i == j )
@@ -313,148 +640,94 @@ int main() {
         h++;
         input.push_back(line);
     }
+    // buildDeps(input, x, y, -1, deps, -1);
+    int** visited = new int*[h];
+    for( int j = 0; j < h; j++){
+        visited[j] = new int[w];
+        for(int i = 0; i < w; i++){
+            visited[j][i] = 0;
+        }
+    }
+    // std::cout << "Building keys" << std::endl;
+    //int** visited, std::vector< std::string > map, int x, int y, KeySet cDep, int* kCount, std::vector<KeySet>* kDeps, int bd
+    buildKeyDeps(visited, input, x, y, KeySet(),kCount, kDep, -1 );
+    // bool keysVisited[KEYS_LEN] = { false };
+    // std::map<unsigned long, int>** matrix = new std::map<unsigned long, int>*[KEYS_LEN];
+    // for( int i = 0; i < KEYS_LEN; i++)
+    //     matrix[i] = new std::map<unsigned long, int>[KEYS_LEN];
+    
+    // buildMatrix(&keysVisited[0], visited, input, matrix, ORIGIN, x, y);
+    
+    // for( auto i = keys.begin(); i != keys.end(); ++i){
+    //     //Fill for others ~!!~!!!!!
+    //     char k = i->first;
+    //     Coord c = i->second;
+    //     buildMatrix(&keysVisited[0], visited, input, matrix, k - 'a', c.x, c.y);
+    // }
+    //Compute closure.
 
-    buildDeps(input, x, y, -1, deps, -1);
 
 
-    buildDist(input, x, y, keys, dist);
+    // for( int i = 0; i < KEYS_LEN; i++){
+    //     for( int j = 0; j < KEYS_LEN; j++){
+    //         std::cout << matrix[i][j].size() << " ";
+    //     }
+    //     std::cout << std::endl;
+    // }
+
+
+
+    // for(int i = 0; i < KEYS_LEN; i++){
+    //     if( !kDep[i].any() )
+    //         continue;
+        
+    //     std::cout << (char)(i + 'a') << ": ";
+    //     for(int j = 0; j < KEYS_LEN; j++){
+    //         if( kDep[i].test(j) )
+    //         std::cout << (char)(j + 'a') << " "; 
+    //     }
+
+    //     std::cout << std::endl;
+    // } 
+    std::cout << "Building dist" << std::endl;
+    buildDist(visited,input, x, y, keys, dist);
 
     std::cout << x << ", " << y << " Keys: " << keys.size() << std::endl;
 
-
+    
     //std::cout << countDeps( deps, 'p' ) << std::endl;
 
-    for(int i = 0; i < keys.size(); i++){
-        for(int j = 0; j < keys.size(); j++){
-            std::cout << dist[i][j] << " ";
-        }
-        std::cout << std::endl;
-    }
-
-    for(int i = 0; i < MAX_LEN; i++){
-        if( deps[i] != -1 ){
-            std::cout << (char) (i + 'A') << " -> " << (char) (deps[i] + 'A') << std::endl;
-        }
-    }
-
-
-    PlanNode pp;
-    for(int j = 0; j < KEYS_LEN; j++)
-        pp.prev[j] = -1;
-    int to = 'p' - 'a';
-    pp.prev['c' - 'a'] = -1;
-    pp.prev['h' - 'a'] = 'c' - 'a';
-    pp.prev['e' - 'a'] = 'h' - 'a';
-    // pp.prev['d' - 'a'] = -1;
-    // pp.prev['d' - 'a'] = -1;
-    // pp.prev['d' - 'a'] = -1;
-
-    std::cout << "Query: " << canJump(pp, to, deps) << std::endl;
-
-    // for(int i = 0; i < KEYS_LEN; i++){
-    //     std::cout << deps[i] << " ";
+    // for(int i = 0; i < keys.size(); i++){
+    //     for(int j = 0; j < keys.size(); j++){
+    //         std::cout << dist[i][j] << " ";
+    //     }
+    //     std::cout << std::endl;
     // }
 
-    PlanNode** plan = new PlanNode*[keys.size()];
-    for(int i = 0; i < keys.size(); i++){
-        plan[i] = new PlanNode[keys.size()];        
-    }
+    std::map< unsigned long, int > * mem = new std::map< unsigned long, int >[KEYS_LEN];
 
-    for( int i = 0; i < keys.size(); i++ ){
-        //std::cout << deps[i] << " ";
-        for(int j = 0; j < keys.size(); j++)
-            plan[0][i].prev[j] = -1;
-        //std::cout << deps[i + 'A'] << " ";
-        if( deps[i + 'a' - 'A'] == -1 ){
-            plan[0][i].dst = dist[i][i];
-            plan[0][i].prev[i] = 0;
-        }else{
-            plan[0][i].dst = 1000000;
-        }
+    KeySet k;
+    for(int i = 0; i < keys.size(); i++)
+        k.set(i);
+    // for(int i = 0; i < keys.size(); i++){
+    //     std::cout << isValidState(i, k, kDep) << std::endl;
+    // }
+   
 
-        std::cout << plan[0][i].dst << " ";
-    }
-
-
-    std::cout << std::endl;
-
-    for( int o = 1; o < keys.size(); o++ ) {
-        //For each rank (order)
-        for( int k = 0; k < keys.size(); k++ ){
-            //Find best for k in rank o
-            int min = 1000000;
-            int min_p = -1;
-            for( int p = 0; p < keys.size(); p++){
-                // Check jump from p to k
-                // if( p == k ) //Don't stay in the same node
-                //     continue;
-                //std::cout << "Plan: " << plan[o-1][p].dst << std::endl;
-                // if( plan[o-1][p].dst == -1 )
-                //     continue;
-                if( plan[o-1][p].prev[k] != -1 ) //Already visited k
-                    continue;
-
-                //Does it have all the dependencies?
-                if( !canJump(plan[o-1][p], k, deps) )
-                    continue;
-                
-                //Satisfy all dependencies.
-                if( dist[p][k] + plan[o-1][p].dst < min){
-                    min = dist[p][k] + plan[o-1][p].dst;
-                    min_p = p;
-                }
-            }            
-            if( min_p != -1 ){
-                //Best for k at o is coming from min_p, at distance min
-                //std::cout << "Best for (o, k) : " << o << ", " << k << " = " << min_p << " ** " << dist[min_p][k] <<std::endl;
-                plan[o][k].dst = min;
-                for( int i = 0; i < KEYS_LEN; i++ )
-                    plan[o][k].prev[i] = plan[o - 1][min_p].prev[i];
-
-                plan[o][k].prev[k] = o;
-            }else{
-                plan[o][k].dst = 1000000;
-                //std::cout << "No plan for " << (char)(k + 'a') << " at  " << o << std::endl ;    
-            }
-
-            std::cout << plan[o][k].dst << " ";
-        }
-
-        std::cout << std::endl;
-    }
-
-    int last = keys.size() - 1;
-    int min = 1000000;
-    int m = -1;
-    for( int k = 0; k < keys.size(); k++ ){
-        if( plan[last][k].dst < min ){
-            min = plan[last][k].dst;
-            m = k;
-        }
-    }
-    std::cout << min << std::endl;
-    for(int i = 0; i < keys.size(); i++ )
-        std::cout << (char)(i + 'a') << " ";
-    std::cout << std::endl;
-    for(int i = 0; i < keys.size(); i++ )
-        std::cout << plan[last][m].prev[i] << " ";
-
-
-
+    int min = getMinCost(k, kDep, dist, mem);	
+    std::cout << "Min: " << min << std::endl;
+    
+    
+    
+    
+    
     // for(int i = 0; i < MAX_LEN; i++){
-    //     if( (int)deps[i] != -1 ){
+    //     if( deps[i] != -1 ){
     //         std::cout << (char) (i + 'A') << " -> " << (char) (deps[i] + 'A') << std::endl;
     //     }
     // }
 
-
-    // State s;
-    // s.keysLeft = keys;
-    // s.map = input;
-
-    // int cost = getKeys(s, x, y, 0);
-
-    // std::cout << "Cost: " <<  cost << std::endl;
-
+    
+    
     return 0;
 }
