@@ -252,14 +252,13 @@ void runProgram(Computer &m, std::vector<__int64> &rom){
     m.status = 0;
     m.pp = 0;
 
-    int N = 7;
+    int N = 6;
 
-    std::string program[7] = {
-        "NOT A J",
-        "NOT B T",
-        "OR T J",
-        "NOT C T",
-        "OR T J",
+    std::string program[6] = {
+        "OR A J",
+        "AND B J",
+        "AND C J",
+        "NOT J J",
         "AND D J",
         "WALK"
     };
