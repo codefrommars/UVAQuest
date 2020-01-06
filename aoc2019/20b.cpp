@@ -78,41 +78,41 @@ void setMem(int level, int portal, int dst){
 }
 
 __int64 encode(int portal, int level){
-    return (__int64)(portals.size() * level) + (__int64)portals.size() * + portal;
+    return (__int64)(portals.size() * level) + (__int64)portal;
 }
 
-int findMin(int start, int end, int p, int lvl, int** dist, int** dLvl){
-    int s = getMem(lvl, p);
-    if( s != -1 )
-        return s;
+// int findMin(int start, int end, int p, int lvl, int** dist, int** dLvl){
+//     int s = getMem(lvl, p);
+//     if( s != -1 )
+//         return s;
 
-    int min = 1000000;
+//     int min = 1000000;
 
-    for(int i = 0; i < portals.size(); i++){
-        if( dist[i][p] <= 0 )
-            continue;
-        // i can go to p
-        if( i == start && lvl != 0 )
-            return 1000000;
-        if( i == end && lvl != 0 )
-            continue;
-        // if( i == )
-        //i is a portal
-        Portal iP = portals[i];
-        int dl = 1 - 2 * iP.inner;
-        int other = portalLinks[iP.code][1 - iP.inner];
-        std::cout << "From: " << names[p] << "(" << lvl << ") to " << names[other] << " at " << (lvl + dl) << std::endl;
-        int cost = findMin(start, end, other, lvl + dl, dist, dLvl) + dist[i][p];
+//     for(int i = 0; i < portals.size(); i++){
+//         if( dist[i][p] <= 0 )
+//             continue;
+//         // i can go to p
+//         if( i == start && lvl != 0 )
+//             return 1000000;
+//         if( i == end && lvl != 0 )
+//             continue;
+//         // if( i == )
+//         //i is a portal
+//         Portal iP = portals[i];
+//         int dl = 1 - 2 * iP.inner;
+//         int other = portalLinks[iP.code][1 - iP.inner];
+//         std::cout << "From: " << names[p] << "(" << lvl << ") to " << names[other] << " at " << (lvl + dl) << std::endl;
+//         int cost = findMin(start, end, other, lvl + dl, dist, dLvl) + dist[i][p];
 
-        if( cost < min ){
-            min = cost;
-        }
-    }
+//         if( cost < min ){
+//             min = cost;
+//         }
+//     }
     
-    setMem(lvl, p, min);
+//     setMem(lvl, p, min);
 
-    return min;
-}
+//     return min;
+// }
 
 
 void computeDist(int o, bool** visited, int x, int y, int* distRow, int dst,  int bd){
@@ -177,12 +177,14 @@ int search(int start, int end, int** dist){
         int lvl = q.front(); q.pop_front();
         int dst = q.front(); q.pop_front();
 
-        std::cout << names[p] << ", " << lvl << std::endl;
 
-        if( v.count(encode(p, lvl)) > 0 ) //already visited
+        if( v.count(encode(p, lvl)) > 0 ){ //already visited
+            // std::cout << "Ignoring: " << names[p] << ", " << lvl << std::endl;
             continue;
-        
+        }
+
         v[ encode(p,lvl) ] = true;
+        // std::cout << "Visiting: " << names[p] << ", " << lvl << ": ";
 
         for(int i = 0; i < portals.size(); i++){
             if( dist[p][i] <= 0 )
@@ -196,7 +198,7 @@ int search(int start, int end, int** dist){
             if( i == end ){
                 if( lvl != 0 )
                     continue;
-
+                // std::cout << "Found: " << names[i] << ", " << lvl << ": " << dst + dist[p][i] << std::endl;
                 return dst + dist[p][i];
             }
             
@@ -204,14 +206,15 @@ int search(int start, int end, int** dist){
                 //Anything else ignore it
                 continue;
             }
-
             //Travel to the next
             int other = portalLinks[iP.code][1 - iP.inner];
             int dl = 2 * iP.inner - 1;
             q.push_back(other);
             q.push_back(lvl + dl);
-            q.push_back(dst + 1);
+            q.push_back(dst + dist[p][i] + 1);
+            // std::cout << "Pushing: " << names[i] << "(" << (lvl + dl) << ", "<< dst + dist[p][i] + 1 << ") ";
         }
+        // std::cout << std::endl;
     }
 
     return -1; //Not found !
@@ -225,6 +228,8 @@ int main() {
     while( std::getline(std::cin, line) )
         input.push_back(line);
     
+    //std::cout << input[0][16] << std::endl;
+
     int h = input.size();
 
     char cPortal[3] = {0};
@@ -276,10 +281,10 @@ int main() {
             }
         }
     }
-    //Find V
-    for(int i = 0; i < input[0].size(); i++){
+     //Find V    
+    for(int i = 0; i < input[0].size(); i++){        
         int lastV = -10;
-        for( int j = 0; j < input.size(); j++){
+        for( int j = 0; j < input.size() - 1; j++){            
             if( input[j][i] == ' ' )
                 lastV = -1;
 
@@ -314,6 +319,7 @@ int main() {
             }
         }
     }
+
     int N = portals.size();
 
     int ** dist = new int*[N];
@@ -342,24 +348,24 @@ int main() {
         portalVisited[i] = 0;
     }
 
-    for( int i = 0; i < N ; i++){
-        for( int j = 0; j < N ; j++){
-            full[i][j] = dist[i][j];
-            level[i][j] = dLvl[i][j];
-        }
-    }
-    for( auto link = portalLinks.begin(); link != portalLinks.end(); ++link){
-        int id0 = link->second[0]; //outter
-        int id1 = link->second[1]; //inner
-        if( id0 == -1 || id1 == -1 )
-            continue;
-        full[id0][id1] = 1;
-        full[id1][id0] = 1;
-        //Outter to inner
-        level[id0][id1] = -1;
-        //Inner to Outter
-        level[id1][id0] = 1;
-    }
+    // for( int i = 0; i < N ; i++){
+    //     for( int j = 0; j < N ; j++){
+    //         full[i][j] = dist[i][j];
+    //         level[i][j] = dLvl[i][j];
+    //     }
+    // }
+    // for( auto link = portalLinks.begin(); link != portalLinks.end(); ++link){
+    //     int id0 = link->second[0]; //outter
+    //     int id1 = link->second[1]; //inner
+    //     if( id0 == -1 || id1 == -1 )
+    //         continue;
+    //     full[id0][id1] = 1;
+    //     full[id1][id0] = 1;
+    //     //Outter to inner
+    //     level[id0][id1] = -1;
+    //     //Inner to Outter
+    //     level[id1][id0] = 1;
+    // }
 //int* portalVisited, int p, int lvl, int tgt, int tgtLevel, int** dist, int dst
 
     // for(auto i = mapper.begin(); i != mapper.end(); ++i){
@@ -387,22 +393,22 @@ int main() {
     // }
 
     //Transitive closure
-    for(int k = 0; k < N; k++)
-        for(int i = 0; i < N; i++)
-            for(int j = 0; j < N; j++){
-                if ( full[i][k] < 0 ||  full[k][j] < 0 )
-                    continue;
+    // for(int k = 0; k < N; k++)
+    //     for(int i = 0; i < N; i++)
+    //         for(int j = 0; j < N; j++){
+    //             if ( full[i][k] < 0 ||  full[k][j] < 0 )
+    //                 continue;
 
-                if( full[i][j] < 0 ){
-                    full[i][j] = full[i][k] + full[k][j];
-                    level[i][j] = level[i][k] + level[k][j];
-                }
+    //             if( full[i][j] < 0 ){
+    //                 full[i][j] = full[i][k] + full[k][j];
+    //                 level[i][j] = level[i][k] + level[k][j];
+    //             }
 
-                if( full[i][k] + full[k][j] < full[i][j] ){
-                    full[i][j] = full[i][k] + full[k][j];
-                    level[i][j] = level[i][k] + level[k][j];
-                }
-            }
+    //             if( full[i][k] + full[k][j] < full[i][j] ){
+    //                 full[i][j] = full[i][k] + full[k][j];
+    //                 level[i][j] = level[i][k] + level[k][j];
+    //             }
+    //         }
     
     int aa = portalByCode( mapper["AA"] );
     int zz = portalByCode( mapper["ZZ"] );
