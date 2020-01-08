@@ -2,52 +2,53 @@
 #include <algorithm>
 #include <string>
 
-constexpr int N = 10007;
-// constexpr int N = 10;
+constexpr __int64 N = 10007;
 
-int deck[N];
-int tmp[N];
+__int64 p = 2019;
 
-void init(){
-    for( int i = 0; i < N; i++)
-        deck[i] = i;
-}
+// void cut(int c){
+//     p = (p - c) % N;
+// }
 
-void cut(int c){
-    if( c < 0 )
-        c += N;
+// void dealINS(){
+//     //p = N - 1 - p;
+//     p = (N - 1 - p) % N;
+// }
 
-    std::copy(deck, deck + c + 1, tmp + N - c);
-    std::copy(deck + c, deck + N, tmp);
-    
-    std::copy(tmp, tmp + N, deck);
-}
+// void dealWI(int inc){
+//     p = (inc * p) % N;
+// }
 
-void dealINS(){
-    for( int i = 0; i < N; i++)
-        tmp[i] = deck[N - 1 - i];
-    
-    std::copy(tmp, tmp + N, deck);
-}
 
-void dealWI(int inc){
-    for(int i = 0; i < N; i++)
-        tmp[ (inc * i) % N ] = deck[i];
-    
-    std::copy(tmp, tmp + N, deck);
-}
+// __int64 egcd(__int64 a, __int64 b, __int64 &x, __int64& y){
+//     if( a == 0 ){
+//         x = 0; 
+//         y = 1;
+//         return b;
+//     }
 
-void show(){
-    for( int i = 0; i < N; i++)
-       std::cout << deck[i] << " ";
-    std::cout << std::endl;
-}
+//     __int64 x1, y1;
+//     __int64 d = egcd( b % a, a, x1, y1);
+//     x = y1 - (b / a) * x1;
+//     y = x1;
+//     return d;
+// }
 
 int main(){
     
-    init();
-
     std::string word;
+    constexpr __int64 N = 10007;
+
+    __int64 p = 2019;
+
+    __int64 a = 1;
+    __int64 b = 0;
+
+    __int64 x = 1;
+    __int64 y = 0;
+
+
+
     while(std::cin >> word){
         if( word.compare("deal") == 0 ){
             std::cin >> word ; 
@@ -55,14 +56,18 @@ int main(){
                 std::cin >> word ; // increment
                 int inc;
                 std::cin >> inc;
-                dealWI(inc);
+                // dealWI(inc);                
+                a = (a * inc) % N;
+                b = (b * inc) % N;
                 continue;
             }
 
             if( word.compare("into") == 0 ){
                 std::cin >> word ; // new
                 std::cin >> word ; // stack
-                dealINS();
+                // dealINS();
+                a = -a;
+                b = (-b - 1) % N;
                 continue;
             }
         }
@@ -70,15 +75,18 @@ int main(){
         if( word.compare("cut") == 0 ){
             int n;
             std::cin >> n;
-            cut(n);
+            // cut(n);
+            b = (b - n) % N;
         }
     }
-    
-    for( int i = 0; i < N; i++){
-        if( deck[i] == 2019 ){
-            std::cout << i << std::endl;
-            break;
-        }
-    }
-    // show();
+
+    //std::cout << a << " " <<  b << std::endl;
+
+    __int64 r = (2019 * a + b) % N;
+    if( r < 0 )
+        r += N;
+
+    std::cout << r << std::endl;
+
+    //std::cout << p << std::endl;
 }
