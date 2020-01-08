@@ -3,19 +3,43 @@
 #include <string>
 #include <vector>
 
-__int64 egcd(__int64 a, __int64 b, __int64 &x, __int64& y){
-    if( a == 0 ){
-        x = 0; 
-        y = 1;
-        return b;
+inline __int64 pmod(__int64 value, __int64 mod){
+    value = value % mod;
+    
+    if( value < 0 )
+        value += mod;
+
+    return value;
+}
+
+inline __int64 mult_mod(__int64 a, __int64 b, __int64 mod){
+    __int64 p = 0;
+
+
+    while( b > 0 ){
+        if( b % 2 == 1 )
+            p = pmod(p + a, mod);
+        a = pmod(a * 2, mod);
+        b = b / 2; 
     }
 
-    __int64 x1, y1;
-    __int64 d = egcd( b % a, a, x1, y1);
-    x = y1 - (b / a) * x1;
-    y = x1;
-    return d;
+    return p;
 }
+
+
+// __int64 egcd(__int64 a, __int64 b, __int64 &x, __int64& y){
+//     if( a == 0 ){
+//         x = 0; 
+//         y = 1;
+//         return b;
+//     }
+
+//     __int64 x1, y1;
+//     __int64 d = egcd( b % a, a, x1, y1);
+//     x = y1 - (b / a) * x1;
+//     y = x1;
+//     return d;
+// }
 
 __int64 big_pow(__int64 a, __int64 n, __int64 m){
     if( n == 0 )
@@ -24,13 +48,12 @@ __int64 big_pow(__int64 a, __int64 n, __int64 m){
         return a;
 
     if( n % 2 == 0 ){
-        __int64 p = big_pow(a, n / 2, m);
-        return (p * p) % m;
+        __int64 p = big_pow(a, n >> 1, m);
+        return mult_mod( p , p, m);
     }
 
-    __int64 p = big_pow(a, (n - 1) / 2, m);
-    __int64 q = (a * p * p) % m;
-    return q;
+    __int64 p = big_pow(a, (n - 1) >> 1, m);
+    return mult_mod( mult_mod(a , p, m) , p, m);
     
     // __int64 q = (a * p) % m;
     // return (q * p) % m;
@@ -39,12 +62,13 @@ __int64 big_pow(__int64 a, __int64 n, __int64 m){
 //m is prime
 __int64 invMult(__int64 a, __int64 m){
     //a ^ ( m - 2) mod m
-    return big_pow(a, m - 2, m) % m;
+    return big_pow(a, m - 2, m);
 }
 
 void comp( __int64 &a, __int64 &b, __int64 c, __int64 d, __int64 m){
-    __int64 at = (a * c) % m;
-    __int64 bt = (((b * c) % m) + d ) % m;
+    __int64 at = mult_mod(a , c, m);
+    __int64 bt =  pmod( mult_mod(b , c, m) + d, m);
+
     a = at;
     b = bt;
 }
@@ -56,39 +80,39 @@ void fn_pow( __int64 &a, __int64 &b, __int64 m, __int64 n){
 
     if( n % 2 == 0 ){
         comp(a, b, a, b, m);        
-        fn_pow( a, b, m, n / 2);
+        fn_pow( a, b, m, n >> 1);
     }else{        
         __int64 a1 = a;
         __int64 b1 = b;
         comp(a, b, a, b, m);
-        fn_pow( a, b, m, (n - 1) / 2);
+        fn_pow( a, b, m, (n - 1) >> 1);
         comp(a1, b1, a, b, m);
         a = a1;
         b = b1;
     }
 }
 
-inline void wrap(__int64 &value, __int64 mod){
-    if( value < 0 )
-        value += mod;
-}
+
 
 int main(){
     
     std::string word;
-    constexpr __int64 N = 10007;
-    constexpr __int64 SHUFFLES = N - 2;
-    // constexpr __int64 N = 119315717514047;
-    // constexpr __int64 SHUFFLES = 101741582076661;
+    // constexpr __int64 N = 10007;
+    // constexpr __int64 SHUFFLES = 1;
+    // constexpr __int64 N = 1000700011;
+    // constexpr __int64 SHUFFLES = 13;
+    constexpr __int64 N = 119315717514047;
+    constexpr __int64 SHUFFLES = 101741582076661;
+    // constexpr __int64 SHUFFLES = 1;
 
-    // __int64 p = 2019;
-    __int64 q = 2020;
+    __int64 p = 2019;
+    //__int64 q = 2020;
 
     __int64 a = 1;
     __int64 b = 0;
 
-    __int64 x = 1;
-    __int64 y = 0;
+    // __int64 x = 1;
+    // __int64 y = 0;
 
 
 
@@ -100,8 +124,8 @@ int main(){
                 int inc;
                 std::cin >> inc;
                 // dealWI(inc);                
-                a = (a * inc) % N;
-                b = (b * inc) % N;
+                a = mult_mod(a , inc, N);
+                b = mult_mod(b , inc, N);
                 continue;
             }
 
@@ -109,8 +133,8 @@ int main(){
                 std::cin >> word ; // new
                 std::cin >> word ; // stack
                 // dealINS();
-                a = -a;
-                b = (-b - 1) % N;
+                a = pmod(-a, N);
+                b = pmod(-b - 1, N);
                 continue;
             }
         }
@@ -119,30 +143,50 @@ int main(){
             int n;
             std::cin >> n;
             // cut(n);
-            b = (b - n) % N;
+            b = pmod(b - n, N);
         }
     }
 
-    if( a < 0 )
-        a += N;
+    __int64 a0 = a;
+    __int64 b0 = b;
 
-    if( b < 0 )
-        b += N;
+    fn_pow(a0, b0, N, N - 1);
+    std::cout << "base: " << a0 << " " <<  b0 << std::endl;
 
-    std::cout << a << " " <<  b << std::endl;
 
-    __int64 ia = invMult(a, N);
+    std::cout << "fn: " << a << " " <<  b << std::endl;
 
-    if( ia < 0 )
-        ia += N;
+    fn_pow(a, b, N, SHUFFLES);
 
-    std::cout << ia << std::endl;
-    std::cout << (ia * a) % N << std::endl;
+    std::cout << "fn^k: " << a << " " <<  b << std::endl;
     
+    __int64 ak = a;
 
-    // // __int64 q = (p * a + b) % N;
-    // // if( r < 0 )
-    // //     r += N;
+    __int64 q = pmod( mult_mod(a , p, N) + b, N);
+
+    std::cout << "q: " <<  q << std::endl;
+
+    __int64 ia = pmod( invMult(a, N), N );
+
+    std::cout <<"invA: " << ia << std::endl;
+
+    __int64 one = mult_mod(ia , a, N);
+
+    std::cout << "One: " << one << std::endl;
+    
+    //Invert
+    fn_pow(a, b, N, N - 2);
+    std::cout <<"Inverted: " << a << " " <<  b << std::endl;
+    std::cout << "Other One: " << mult_mod(ak , a, N) << std::endl;
+
+
+    __int64 iq = pmod( mult_mod(a , q, N) + b, N );
+    
+    std::cout << "iq: " <<  iq << std::endl;
+
+    // __int64 q = (p * a + b) % N;
+    // if( r < 0 )
+    //     r += N;
 
     // // std::cout << r << std::endl;
 
