@@ -26,21 +26,6 @@ inline __int64 mult_mod(__int64 a, __int64 b, __int64 mod){
     return p;
 }
 
-__int64 big_pow(__int64 a, __int64 n, __int64 m){
-    if( n == 0 )
-        return 1;
-    if( n == 1 )
-        return a;
-
-    if( n % 2 == 0 ){
-        __int64 p = big_pow(a, n >> 1, m);
-        return mult_mod( p , p, m);
-    }
-
-    __int64 p = big_pow(a, (n - 1) >> 1, m);
-    return mult_mod( mult_mod(a , p, m) , p, m);
-}
-
 void comp( __int64 &a, __int64 &b, __int64 c, __int64 d, __int64 m){
     __int64 at = mult_mod(a , c, m);
     __int64 bt =  pmod( mult_mod(b , c, m) + d, m);
