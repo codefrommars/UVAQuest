@@ -13,13 +13,14 @@ int mode(int opcode, int rParam){
 }
 
 struct Computer{
-    int status; //Blocked = 1, Halted = 2.
+    int status; //Blocked = 1, Halted = 2, Idle = 3
     int relativeBase;
     int pp;
     __int64* ram;
     //Problem specific
     std::deque<__int64> in_pin;
     std::deque<__int64> out_pin;
+    bool idle_net;
 };
 
 
@@ -72,12 +73,18 @@ void mul(Computer* m ){
 void in(Computer* m){
 
     __int64 v = -1;
-
+    
 //Doesn't block
+
     if( m->in_pin.size() > 0 ){
         v = m->in_pin.front();
         m->in_pin.pop_front();
+        m->idle_net = false;
+        // std::cout << "Read" << std::endl;
+    }else{
+        m->idle_net = true;
     }
+
     setParam(m, 1, v);
 
     m->pp += 2;
@@ -88,6 +95,7 @@ void out(Computer *m){
     __int64 a = getParam(m, 1);    
     m->out_pin.push_back(a);
     m->pp += 2;
+    m->idle_net = false;
 }
 
 void jnz(Computer *m){
@@ -155,6 +163,7 @@ void startComputer(Computer* comps, std::vector<__int64> rom, int i){
     comps[i].out_pin.clear();
     comps[i].status = 0;
     comps[i].pp = 0;
+    comps[i].idle_net = false;
 
     //Set the Network number
     comps[i].in_pin.push_back( i );
@@ -162,14 +171,13 @@ void startComputer(Computer* comps, std::vector<__int64> rom, int i){
 
 int runOneOp(Computer* m){
     //std::cout << "Status " << m->status << std::endl;
-    if( m->status != 0 )
-        return - 1;
     
     if( m->ram[m->pp] == 99 ){
         m->status = 2; //halted
         return m->status;
     }
     //std::cout << "Running OP: " << m->ram[m->pp] << std::endl;
+
     op[ m->ram[m->pp] % 100 ](m);
     return m->status;
 }
@@ -194,6 +202,11 @@ int main(){
             break;
         }
     }
+    bool NAT = false;
+    __int64 xNAT = -1;
+    __int64 yNAT = -1;
+    __int64 xDelivered = -2;
+    __int64 yDelivered = -2;
 
     Computer comps[N];
 
@@ -202,18 +215,24 @@ int main(){
     
     int running = N;
     while( running > 0 ){
+        int idle = 0;
         for( int i = 0; i < N; i++){
-
+            
             if( comps[i].status == 2 )
                 continue;
            
             int status = runOneOp(&comps[i]);
             if( status == 2 ){
                 running--;
-                std::cout << i << " terminated." << std::endl;
+                //std::cout << i << " terminated." << std::endl;
                 continue;
             }
+
+            if( comps[i].idle_net && (comps[i].in_pin.size() == 0) )
+                idle++;
         }
+        // if( idle == N )
+        //     std::cout << "IDLE" << std::endl;
 
         for( int i = 0; i < N; i++){
             if( comps[i].out_pin.size() < 3 )
@@ -230,11 +249,25 @@ int main(){
             //std::cout << i << ": (" << x << ", " << y << ") -> " << address << std::endl;
 
             if( address == 255 ){
-                std::cout << y << std::endl;
-                return 0;
+                xNAT = x;
+                yNAT = y;
+                NAT = true;
+                // std::cout << "(" << x << ", " << y << ")" << std::endl;
+                continue;
             }
                 
             sendPacket(comps, address, x, y);
+        }
+        
+        if( idle == N && NAT ){
+            if( yDelivered == yNAT ){
+                std::cout << yNAT << std::endl;
+                return 0;
+            }
+            // std::cout << "NAT -> 0 : " << xNAT << ", " << yNAT << std::endl;
+            sendPacket(comps, 0, xNAT, yNAT);
+            xDelivered = xNAT;
+            yDelivered = yNAT;
         }
     }
 
