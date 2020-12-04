@@ -7,11 +7,9 @@
 typedef std::map< std::string, std::string > Password;
 
 std::vector<Password> readPasswords() {
-
     std::vector<Password>  passwords;
-    std::string line ;
+    std::string line;
 
-    int current = 0;  
     Password password;
     while( std::getline( std::cin, line ) ) {
 
@@ -63,38 +61,39 @@ bool isValid2(Password password){
     if( !isValid1(password) )
         return false;
 
-    int byr = 0;
-    sscanf( password["byr"].c_str(), "%d", &byr );
+    int byr = atoi(password["byr"].c_str());
     if( byr < 1920 || byr > 2002 )
         return false;
- 
-    int iyr = 0;
+
+    int iyr = atoi(password["iyr"].c_str());
     sscanf( password["iyr"].c_str(), "%d", &iyr );
     if( iyr < 2010 || iyr > 2020 )
         return false;
 
-    int eyr = 0;
-    sscanf( password["eyr"].c_str(), "%d", &eyr );
+    int eyr = atoi(password["eyr"].c_str());
     if( eyr < 2020 || eyr > 2030 )
         return false;
     
-    int hgt = 0; 
     int unit = password["hgt"].find_first_not_of("0123456789");
     if( unit == -1 )
         return false;
 
-    sscanf( password["hgt"].substr(0, unit).c_str(), "%d", &hgt );
-    if( password["hgt"][unit] == 'c' ){ //This is a hack. The proper validation should test for "cm" and "in"
+    int hgt = atoi(password["hgt"].substr(0, unit).c_str());
+    if( password["hgt"].size() - unit != 2 )
+        return false;
+
+    if( password["hgt"][unit] == 'c' && password["hgt"][unit+1] == 'm'){
         if( hgt < 150 || hgt > 193 )
             return false;
-    }else {
+    }else if( password["hgt"][unit] == 'i' && password["hgt"][unit+1] == 'n'){
         if( hgt < 59 || hgt > 76 )
             return false;
+    }else{ 
+        return false;
     }
 
     if( password["hcl"].size() != 7 || password["hcl"][0] != '#' )
         return false;
-    
     if( password["hcl"].find_last_not_of("0123456789abcdef") != 0 )
         return false;
 
@@ -107,8 +106,7 @@ bool isValid2(Password password){
     if( password["pid"].size() != 9 ) 
         return false;
 
-    int dif = password["pid"].find_first_not_of("0123456789");
-    if( dif >= 0 )
+    if( (int)password["pid"].find_first_not_of("0123456789") >= 0 )
         return false;
 
     return true;
