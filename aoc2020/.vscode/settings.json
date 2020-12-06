@@ -1,7 +1,7 @@
 {
     "files.associations": {
-        "*.kts": "gradle",
         "*.inx": "xml",
+        "*.kts": "gradle",
         "cmath": "cpp",
         "concepts": "cpp",
         "cstddef": "cpp",
@@ -58,6 +58,9 @@
         "string": "cpp",
         "string_view": "cpp",
         "fstream": "cpp",
-        "sstream": "cpp"
+        "sstream": "cpp",
+        "bitset": "cpp",
+        "map": "cpp",
+        "xtree": "cpp"
     }
 }
