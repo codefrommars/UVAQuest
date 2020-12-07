@@ -14,27 +14,19 @@ int getId(std::string colorName){
     return colorId[colorName];
 }
 
-std::string readColor(std::istringstream &str){
-    std::string adj, color;
-    str >> adj;
-    str >> color;
-    return adj + color;
-}
-
 void load() {
     for( std::string line; std::getline(std::cin, line); ){
         std::istringstream strLine(line);
-        int colorRow = getId(readColor(strLine));
-        
-        std::string ignore;
-        strLine >> ignore;//bags
-        strLine >> ignore;//contain
+        std::string adj, color, ignore;
 
+        strLine >> adj >> color >> ignore >> ignore;
+        int colorRow = getId(adj + color);
+        
         int ammount = 0;
         while( strLine >> ammount ){
-            int contained = getId(readColor(strLine));
+            strLine >> adj >> color >> ignore;
+            int contained = getId(adj + color);
             contains[colorRow][contained] = ammount;
-            strLine >> ignore;//bags...
         }
     }
 }
