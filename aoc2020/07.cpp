@@ -4,15 +4,8 @@
 #include <map>
 #include <set>
 
-int contains[1024][1024];
-std::map< std::string, int > colorId;
-
-int getId(std::string colorName){
-    if( colorId.count(colorName) == 0 )
-        colorId[colorName] = colorId.size();
-
-    return colorId[colorName];
-}
+std::map< std::string, std::set<std::string> > parents;
+std::map< std::string, std::map<std::string, int> > contents;
 
 void load() {
     for( std::string line; std::getline(std::cin, line); ){
@@ -20,53 +13,49 @@ void load() {
         std::string adj, color, ignore;
 
         strLine >> adj >> color >> ignore >> ignore;
-        int colorRow = getId(adj + color);
+        std::string colorRow = adj + color;
         
         int ammount = 0;
         while( strLine >> ammount ){
             strLine >> adj >> color >> ignore;
-            int contained = getId(adj + color);
-            contains[colorRow][contained] = ammount;
+            contents[colorRow][adj + color] = ammount;
+            parents[adj + color].insert( colorRow );
         }
     }
 }
 
 // ---- Part 1 ----
-void addContainers(int color, std::set<int> &containers){
-    if( containers.count(color) != 0 )
-        return;
-
-    containers.insert(color);
-    for(int i = 0; i < colorId.size(); i++){
-        if( contains[i][color] )
-            addContainers(i, containers);
-    }
+void listAncestors(std::string id, std::set<std::string> &ancestors) {
+    ancestors.insert(id);
+    std::set<std::string> par = parents[id];
+    for(auto p = par.begin(); p != par.end(); p++ )
+        listAncestors(*p, ancestors);
 }
 
 void part1() {
     load();
-    std::set<int> containers;
-    addContainers(getId("shinygold"), containers);
-    std::cout << containers.size() - 1 << std::endl; //Remove shiny gold from the count
+    std::set<std::string> an;
+    listAncestors("shinygold", an);
+    std::cout << an.size() - 1 << std::endl;
 }
 
 // ---- Part 2 ----
-int insideOf(int color){
+int insideOf(std::string id){
     int total = 0;
 
-    for(int j = 0; j < colorId.size(); j++){
-        int mult = contains[color][j];
-        if( mult != 0 )
-            total += mult * (1 +  insideOf(j));
+    std::map<std::string, int> contained = contents[id];
+    for(auto c = contained.begin(); c != contained.end(); c++){
+        if( c->second != 0 )
+            total += c->second * (1 +  insideOf(c->first));
     }
     return total;
 }
 
 void part2() {
     load();
-    std::cout << insideOf(getId("shinygold")) << std::endl;
+    std::cout << insideOf("shinygold") << std::endl;
 }
 
 int main() {
-    part2();
+    part1();
 }
