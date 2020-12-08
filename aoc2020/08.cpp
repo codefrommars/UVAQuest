@@ -36,11 +36,10 @@ void part1() {
 }
 
 // ---- Part 2 ----
-bool fixes(std::vector<Instruction> program, int index){
+bool fixes(std::vector<Instruction> program, int index, int acum){
     program[index].first = (program[index].first == 'n') ? 'j' : 'n'; //Patch the program
     std::set<int> executed;
-    int acum = 0;
-    for(int pc = 0; pc < program.size(); pc += exec(program[pc], &acum) ){
+    for(int pc = index; pc < program.size(); pc += exec(program[pc], &acum) ){
         if( executed.count(pc) != 0 )
             return false;
         executed.insert(pc);
@@ -54,7 +53,7 @@ void part2(){
     int acum = 0;
     for(int pc = 0; pc < program.size();  pc += exec(program[pc], &acum) ){
         if( program[pc].first != 'a' )
-            if( fixes(program, pc) )
+            if( fixes(program, pc, acum) )
                 return;
     }
 }
