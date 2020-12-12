@@ -1,8 +1,9 @@
 #include <iostream>
 #include <string>
 #include <map>
-//Discrete Sin: [90, 180, 270, 360] -> (((deg)/90)%4) -> [0, 1, 2, 3] -> (i%2)*(1-2*i/2) -> [0, 1, 0, -1]
-#define SIN(p) ( ( (((p)/90)%4)%2)*(1 - 2*((((p)/90)%4)/2)) )
+
+int S_TABLE[4] = {0, 1, 0, -1};
+#define SIN(x) ( S_TABLE[((x)/90)%4] )
 
 struct Point { int x; int y; };
 
