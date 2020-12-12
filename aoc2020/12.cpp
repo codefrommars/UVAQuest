@@ -1,33 +1,25 @@
 #include <iostream>
 #include <string>
 #include <map>
+//Discrete Sin: [90, 180, 270, 360] -> (((deg)/90)%4) -> [0, 1, 2, 3] -> (i%2)*(1-2*i/2) -> [0, 1, 0, -1]
+#define SIN(p) ( ( (((p)/90)%4)%2)*(1 - 2*((((p)/90)%4)/2)) )
 
 struct Point { int x; int y; };
-std::map<char, Point > dirs = {// NWSE -> deltas, LR -> rotation coord. multiplier
-    {'R', {-1, 1}}, {'N', {0, 1}},  
-    {'W', {-1, 0}},                 {'E', {1, 0}},
-                    {'S', {0, -1}}, {'L', {1, -1}},
-};
+
+std::map<char, Point > dirs = { {'N', {0, 1}}, {'W', {-1, 0}}, {'S', {0, -1}}, {'E', {1, 0}} };
 
 void run(Point* fwd, Point* mv, Point* tgt){//Points affected by [F], [NSWE], [LR]
     for( std::string cmd; std::cin >> cmd; ){
         char c = cmd[0];
         int p = atoi( cmd.substr(1).c_str() );
-        Point d = dirs[c];
 
         if( c == 'L' || c == 'R' ){
-            for( int deg = p; deg > 0; deg -= 90 ){
-                int rx = d.x * tgt->x;
-                int ry = d.y * tgt->y;
-                tgt->x = ry;
-                tgt->y = rx;
-            }
+            if( c == 'R' ) p = 360 - p;
+            *tgt = { tgt->x*(SIN(p+90))- tgt->y*(SIN(p)), tgt->x*(SIN(p)) + tgt->y*(SIN(p+90)) };
         }else if( c == 'F' ){
-            fwd->x += p * (tgt->x);
-            fwd->y += p * (tgt->y);
+            *fwd = { fwd->x + p * (tgt->x), fwd->y + p * (tgt->y)};
         }else{// N S W E
-            mv->x += p * d.x;
-            mv->y += p * d.y;
+            *mv = { mv->x + p * dirs[c].x, mv->y + p * dirs[c].y };
         }
     }
 }
